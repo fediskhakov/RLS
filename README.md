@@ -1,3 +1,6 @@
+Recursive lexicographical Search
+================================
+
 This code that implements the RLS method and solves the 
 Bertrand pricing and investment game in the papers
 "Recursive Lexicographical Search: Finding all Markov Perfect Equilibria of Finite State Directional Dynamic Games"
