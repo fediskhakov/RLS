@@ -195,7 +195,7 @@ classdef graph
             hold off;
         end
 
-        function num_equilibria=br0eta(br,g,ic1,ic2,iC);
+        function num_equilibria=br0eta(br,g,ic1,ic2,iC,ax);
             % This function makes the plot of two best response
             % functions for the two firms on the unit square
             % INPUTS: solution br, g
@@ -316,15 +316,22 @@ classdef graph
             eqbs=g(iC).solution(i,[11 12]);
 
             % plot
-            linethick=5;
-            fontsize=24;
-            fig1=figure('Color',[1 1 1],'NextPlot','new');
-            ax=axes('Parent',fig1);
+            if ~exist('ax')
+                fig1=figure('Color',[1 1 1],'NextPlot','new');
+                ax=axes('Parent',fig1);
+                linethick=5;
+                fontsize=24;
+                dotsize=120;
+            else
+                linethick=2;
+                fontsize=12;
+                dotsize=40;
+            end
             plot(ax,PjF{1},PiF{1},'Linewidth',linethick,'Color','red');% best response of firm 1
             hold(ax,'on');
             plot(ax,PiF{2},PjF{2},'Linewidth',linethick,'Color','black','LineStyle','--');% best response of firm 2, swapping axes
             hold(ax,'on');
-            scatter(eqbs(:,2),eqbs(:,1),120,[0 0 1],'filled','Linewidth',linethick,'MarkerFaceColor','white','MarkerEdgeColor','black');
+            scatter(eqbs(:,2),eqbs(:,1),dotsize,[0 0 1],'filled','Linewidth',linethick,'MarkerFaceColor','white','MarkerEdgeColor','black');
             % title(ax,'Best response functions for firm 1 (solid) and firm 2 (dashed)', ...
             %     'FontSize',fontsize);
             set(ax,'XTick',[0 .5 1],'XTickLabel',{'0','','1'}, ...
@@ -338,6 +345,46 @@ classdef graph
             hold(ax,'off');
         end
 
+
+        function []=all_stage_equilibria(par,br,g)
+            %plot all stage equilibria
+            %top 5 layers in one subplot, other layers in their own
+
+            %map of subplots: ic, ic1, ic2 (base 1) = [raw, column]
+            spmap{5,5,5}=[1 1]; %apex in the left top corner
+            spmap{4,4,4}=[2 2];spmap{4,4,5}=[1 2];spmap{4,5,4}=[2 3];spmap{4,5,5}=[1 3];spmap{3,3,3}=[3 4];spmap{3,3,4}=[2 4];spmap{3,3,5}=[1 4];spmap{3,4,3}=[3 5];spmap{3,4,4}=[2 5];spmap{3,4,5}=[1 5];spmap{3,5,3}=[3 6];spmap{3,5,4}=[2 6];spmap{3,5,5}=[1 6];spmap{2,2,2}=[4 7];spmap{2,2,3}=[3 7];spmap{2,2,4}=[2 7];spmap{2,2,5}=[1 7];spmap{2,3,2}=[4 8];spmap{2,3,3}=[3 8];spmap{2,3,4}=[2 8];spmap{2,3,5}=[1 8];spmap{2,4,2}=[4 9];spmap{2,4,3}=[3 9];spmap{2,4,4}=[2 9];spmap{2,4,5}=[1 9];spmap{2,5,2}=[4 10];spmap{2,5,3}=[3 10];spmap{2,5,4}=[2 10];spmap{2,5,5}=[1 10];spmap{1,1,1}=[5 11];spmap{1,1,2}=[4 11];spmap{1,1,3}=[3 11];spmap{1,1,4}=[2 11];spmap{1,1,5}=[1 11];spmap{1,2,1}=[5 12];spmap{1,2,2}=[4 12];spmap{1,2,3}=[3 12];spmap{1,2,4}=[2 12];spmap{1,2,5}=[1 12];spmap{1,3,1}=[5 13];spmap{1,3,2}=[4 13];spmap{1,3,3}=[3 13];spmap{1,3,4}=[2 13];spmap{1,3,5}=[1 13];spmap{1,4,1}=[5 14];spmap{1,4,2}=[4 14];spmap{1,4,3}=[3 14];spmap{1,4,4}=[2 14];spmap{1,4,5}=[1 14];spmap{1,5,1}=[5 15];spmap{1,5,2}=[4 15];spmap{1,5,3}=[3 15];spmap{1,5,4}=[2 15];spmap{1,5,5}=[1 15];
+            crr=5-par.nC;%correction to allow for using the same spmap for smaller that nC=5 problems
+            sprows=min(5,par.nC); %rows equal to max number of c (for bottom layer)
+            spcols=sum(1:sprows); %cols to fit all layers
+            %loop through all stages
+            for ic=max(1,par.nC-4-5):par.nC  %limit to 5 figures
+                if ic<=par.nC-5+1 | ~exist('fig1')
+                    position=get(0,'ScreenSize');
+                    position([1 2])=0;
+                    fig1=figure('Color',[1 1 1],'Position',position);
+                end
+                for ic1=ic:par.nC
+                    for ic2=ic:par.nC
+                        if par.nC>5 & ic<par.nC-5+1
+                            mic=par.nC-ic+1;
+                            spindx=(mic-(ic2-ic)-1)*mic+(ic1-ic+1);
+                            ax=subplot(mic,mic,spindx,'Parent',fig1);
+                            graph.br0eta(br,g,ic1,ic2,ic,ax);
+                            % title(ax,sprintf('ic=%d ic1=%d ic2=%d',ic,ic1,ic2));
+                            title(ax,sprintf('%d %d%d',ic,ic1,ic2));
+                            drawnow
+                        else
+                            spindx=(spmap{ic+crr,ic1+crr,ic2+crr}(1)-1)*spcols+spmap{ic+crr,ic1+crr,ic2+crr}(2);
+                            ax=subplot(sprows,spcols,spindx,'Parent',fig1);
+                            graph.br0eta(br,g,ic1,ic2,ic,ax);
+                            % title(ax,sprintf('ic=%d ic1=%d ic2=%d',ic,ic1,ic2));
+                            title(ax,sprintf('%d %d%d',ic,ic1,ic2));
+                            drawnow
+                        end
+                    end
+                end
+            end
+        end            
         
         function []=br2(br, g, eta, c1,c2,iC,iF, spacing);
             brc=br(iC).br;
@@ -531,6 +578,11 @@ classdef graph
                 seqbstr=sortrows(eqbstr(mask,:),8);
                 statistics(i,:) = [sum(seqbstr(:,2)) size(unique(seqbstr(:,3:4),'rows'),1) seqbstr(:,2)'*seqbstr(:,5:end)];
                 
+                if sw.alternate==1
+                     %account for symmetric points
+                     statistics(i,:)=statistics(i,:)*2;
+                end
+
                 
                 if ~isempty(seqbstr)
                     Ni=[0; seqbstr(:,2)];
@@ -663,6 +715,8 @@ classdef graph
             statistics = [sum(eqbstr(:,2)) size(unique(eqbstr(:,3:4),'rows'),1) eqbstr(:,2)'*eqbstr(:,5:end)];
             %do the graph
             
+                
+
             %1 prepare data and plot
             if sw.alternate==1
                 %add symmetric points
